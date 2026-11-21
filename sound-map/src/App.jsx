@@ -1,22 +1,25 @@
-// App.jsx only ASSEMBLES the pieces. Keep it tiny so merges stay easy.
+import { useState } from "react";
 import { AppProvider } from "./shared/AppContext.jsx";
-import NavButtons from "./components/ui/NavButtons.jsx";
+import SidePanel from "./components/ui/SidePanel.jsx";
 import MapView from "./components/maps/MapView.jsx";
-import ChatButton from "./components/chatbot/ChatButton.jsx";
 import Soundscape from "./components/audio/Soundscape.jsx";
 
 export default function App() {
+  const [panelOpen, setPanelOpen] = useState(false);
+
   return (
     <AppProvider>
-      <header className="topbar">
-        <h1>Sound Map</h1>
-        <NavButtons />
-      </header>
-      <main>
+      {/* Mobile hamburger */}
+      <button className="menu-toggle" onClick={() => setPanelOpen(o => !o)} aria-label="Toggle menu">
+        {panelOpen ? "✕" : "☰"}
+      </button>
+
+      <div className="app-shell">
+        <SidePanel open={panelOpen} onClose={() => setPanelOpen(false)} />
         <MapView />
-      </main>
+      </div>
+
       <Soundscape />
-      <ChatButton />
     </AppProvider>
   );
 }

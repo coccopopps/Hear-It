@@ -1,8 +1,9 @@
-// OWNER: chatbot/voice person. Speech-to-text via the browser SpeechRecognition API (Chrome/Edge).
+// Speech-to-text via Web Speech API (Chrome/Edge).
 import { useRef, useState } from "react";
 
 export function useVoice(onResult) {
   const [listening, setListening] = useState(false);
+  const [transcript, setTranscript] = useState("");
   const recRef = useRef(null);
   const supported = "webkitSpeechRecognition" in window || "SpeechRecognition" in window;
 
@@ -10,16 +11,29 @@ export function useVoice(onResult) {
     if (!supported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SR();
-    rec.lang = "en-US"; // change to "fr-FR" or "ar-DZ" if needed
-    rec.interimResults = false;
-    rec.onresult = (e) => onResult(e.results[0][0].transcript);
-    rec.onend = () => setListening(false);
+    rec.lang = "en-US";
+    rec.interimResults = true;
+    rec.continuous = false;
+
+    rec.onresult = (e) => {
+      const interim = Array.from(e.results).map(r => r[0].transcript).join("");
+      setTranscript(interim);
+      if (e.results[e.results.length - 1].isFinal) {
+        onResult(interim);
+        setTranscript("");
+      }
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => { setListening(false); setTranscript(""); };
     rec.start();
     recRef.current = rec;
     setListening(true);
   }
+
   function stop() {
     recRef.current?.stop();
+    setListening(false);
   }
-  return { listening, supported, start, stop };
+
+  return { listening, supported, transcript, start, stop };
 }
